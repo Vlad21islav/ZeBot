@@ -20,6 +20,8 @@ if not TOKEN:
     my_id = keys.my_id
 
 bot = telebot.TeleBot(TOKEN)
+bot.remove_webhook()
+
 
 path = ""
 # path = "/home/Vlad21islav/ZeBot/"
