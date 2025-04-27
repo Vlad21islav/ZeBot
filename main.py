@@ -191,26 +191,19 @@ def predict_command(message):
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
     try:
-        # Скачиваем голосовое сообщение
         file_info = bot.get_file(message.voice.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
 
-        # Сохраняем временно файл
         with open("voice.ogg", 'wb') as new_file:
             new_file.write(downloaded_file)
 
-        # Загружаем модель при первом вызове
         model_instance = get_model()
-
-        # Распознаём речь
         segments, info = model_instance.transcribe("voice.ogg")
 
-        # Собираем текст из всех сегментов
         recognized_text = ''
         for segment in segments:
             recognized_text += segment.text + ' '
 
-        # Отправляем текст обратно пользователю
         bot.reply_to(message, recognized_text.strip())
 
     except Exception as e:
