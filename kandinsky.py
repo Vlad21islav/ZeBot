@@ -4,7 +4,8 @@ import requests
 import base64
 
 
-class Text2ImageAPI:
+class FusionBrainAPI:
+
     def __init__(self, url, api_key, secret_key):
         self.URL = url
         self.AUTH_HEADERS = {
@@ -12,45 +13,45 @@ class Text2ImageAPI:
             'X-Secret': f'Secret {secret_key}',
         }
 
-    def get_model(self):
-        response = requests.get(self.URL + 'key/api/v1/models', headers=self.AUTH_HEADERS)
+    def get_pipeline(self):
+        response = requests.get(self.URL + 'key/api/v1/pipelines', headers=self.AUTH_HEADERS)
         data = response.json()
         return data[0]['id']
 
-    def generate(self, prompt, model, images=1, width=1024, height=1024):
+    def generate(self, prompt, pipeline, images=1, width=1024, height=1024):
         params = {
             "type": "GENERATE",
             "numImages": images,
             "width": width,
             "height": height,
             "generateParams": {
-                "query": f"{prompt}"
+                "query": f'{prompt}'
             }
         }
 
         data = {
-            'model_id': (None, model),
+            'pipeline_id': (None, pipeline),
             'params': (None, json.dumps(params), 'application/json')
         }
-        response = requests.post(self.URL + 'key/api/v1/text2image/run', headers=self.AUTH_HEADERS, files=data)
+        response = requests.post(self.URL + 'key/api/v1/pipeline/run', headers=self.AUTH_HEADERS, files=data)
         data = response.json()
         return data['uuid']
 
     def check_generation(self, request_id, attempts=10, delay=10):
         while attempts > 0:
-            response = requests.get(self.URL + 'key/api/v1/text2image/status/' + request_id, headers=self.AUTH_HEADERS)
+            response = requests.get(self.URL + 'key/api/v1/pipeline/status/' + request_id, headers=self.AUTH_HEADERS)
             data = response.json()
             if data['status'] == 'DONE':
-                return data['images']
+                return data['result']['files']
 
             attempts -= 1
             time.sleep(delay)
 
 
 def kandinsky(prompt):
-    api = Text2ImageAPI('https://api-key.fusionbrain.ai/', '192AF6BD6227D519E76DAB5CF92927D8', '7F94C1B52466DE200676CFD63B6CE4AB')
-    model_id = api.get_model()
-    uuid = api.generate(prompt, model_id)
+    api = FusionBrainAPI('https://api-key.fusionbrain.ai/', '7EFB01015D3204CF36339F7F1AA91C63', 'E5A34DDA35CFED2629E95CD6D584C1D4')
+    pipeline_id = api.get_pipeline()
+    uuid = api.generate(prompt, pipeline_id)
     images = api.check_generation(uuid)
     image_base64 = images[0]
     image_data = base64.b64decode(image_base64)

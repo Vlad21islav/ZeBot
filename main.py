@@ -3,7 +3,6 @@ import random
 import telebot
 import requests
 import kandinsky
-from faster_whisper import WhisperModel
 import time
 
 TOKEN = os.environ.get('TOKEN')
@@ -25,16 +24,7 @@ bot = telebot.TeleBot(TOKEN)
 bot.remove_webhook()
 
 path = ""
-
-
 # path = "/home/Vlad21islav/ZeBot/"
-
-
-def get_model():
-    global model
-    if model is None:
-        model = WhisperModel("tiny", compute_type="float32")
-    return model
 
 
 def command_length(message):
@@ -186,28 +176,6 @@ def predict_command(message):
             bot.reply_to(message, random.choice(answers))
     else:
         bot.send_message(message.chat.id, "Слишком маленький запрос")
-
-
-@bot.message_handler(content_types=['voice'])
-def handle_voice(message):
-    try:
-        file_info = bot.get_file(message.voice.file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-
-        with open("voice.ogg", 'wb') as new_file:
-            new_file.write(downloaded_file)
-
-        model_instance = get_model()
-        segments, info = model_instance.transcribe("voice.ogg")
-
-        recognized_text = ''
-        for segment in segments:
-            recognized_text += segment.text + ' '
-
-        bot.reply_to(message, recognized_text.strip())
-
-    except Exception as e:
-        bot.reply_to(message, f"Ошибка при обработке голосового сообщения:\n{str(e)}")
 
 
 bot.polling(none_stop=True, timeout=123)
